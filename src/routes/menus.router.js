@@ -1,13 +1,15 @@
 import express from 'express'
 import { prisma } from "../utils/prisma/index.js";
+import { createMenus } from "../joi.js"
 
 const router = express.Router()
 
 // 메뉴 등록 API
 router.post('/categories/:categoryId/menus', async(req, res, next) => {
     try {
+    const validation = await createMenus.validateAsync(req.body);
+    const { name, description, image, price } = validation;
     const { categoryId } = req.params;
-    const { name, description, image, price } = req.body;
     const categories = await prisma.categories.findFirst({
         where: {
             categoryId: +categoryId
@@ -33,7 +35,6 @@ router.post('/categories/:categoryId/menus', async(req, res, next) => {
             name,
             description,
             image,
-            status: 'FOR_SALE', // 기본설정이..이게 맞나?
             price,
             order
         }
@@ -47,8 +48,9 @@ router.post('/categories/:categoryId/menus', async(req, res, next) => {
 // 카테고리 별 메뉴 조회  API
 router.get('/categories/:categoryId/menus', async(req, res, next) => {
     try {
+    const validation = await createMenus.validateAsync(req.body);
+    const { name, image, price, order } = validation;
     const { categoryId } = req.params;
-    const { name, image, price, order } = req.body;
     const categories = await prisma.categories.findFirst({
         where: { categoryId: +categoryId }
     })
@@ -74,8 +76,9 @@ router.get('/categories/:categoryId/menus', async(req, res, next) => {
 // 메뉴 상세 조회
 router.get('/categories/:categoryId/menus/:menuId', async (req, res, next) => {
     try {
-    const { categoryId } = req.params;
-    const { menuId, name, description, image, price, status } = req.body;
+    const validation = await createMenus.validateAsync(req.body);
+    const { name, description, image, price, status } = validation;
+    const { categoryId, menuId } = req.params;
     const categories = await prisma.categories.findFirst({
         where: { categoryId: +categoryId }
     })
@@ -100,8 +103,10 @@ router.get('/categories/:categoryId/menus/:menuId', async (req, res, next) => {
 })
 // 메뉴 수정
 router.patch('/categories/:categoryId/menus/:menuId', async (req, res, next) => {
+    try {
+    const validation = await createMenus.validateAsync(req.body);
     const { categoryId, menuId } = req.params;
-    const { name, description, price, status } = req.body;
+    const { name, description, price, status } = validation;
     const categories = await prisma.categories.findFirst({
         where: { categoryId: +categoryId }
     })
@@ -121,20 +126,26 @@ router.patch('/categories/:categoryId/menus/:menuId', async (req, res, next) => 
         return res.status(401).json({ errorMessage: "메뉴가격이0보다 작을수 없습니다." })
     }
     return res.status(200).json({ data: UpdateMenu })
+}catch (error) {
+    next(error)
+}
 })
 // 메뉴 삭제
 router.delete('/categories/:categoryId/menus/:menuId', async (req, res, next) => {
-    const { categoryId, menuId } = req.params;
+    try {    const { categoryId, menuId } = req.params;
     const menus = await prisma.menus.findFirst({
         where: { categoryId: +categoryId }
     })
     if (!menus) {
         return res.status(404).json({ errorMessage: "존재하지 않는 메뉴 입니다." })
     }
-    const DeleteMenus = await prisma.menus.delete({
+    await prisma.menus.delete({
         where: { menuId: +menuId }
     })
-    return res.status(200).json({ data: DeleteMenus })
+    return res.status(200).json({ Message: "데이터가삭제되었습니다." })
+}catch (error) {
+    next(error)
+}
 })
 
 export default router
