@@ -16,6 +16,12 @@ const createMenus = joi.object({
     order: joi.number()
   })
 
-  export { createCategory, createMenus };
+  const createUsers = joi.object ({
+    nickname: joi.string().min(3).max(15).label("닉네임 형식이 올바르지 않습니다."),
+    password: joi.string().min(8).max(20),
+    usertype: joi.string().valid("CUSTOMER", "OWNER")
+  })
+
+  export { createCategory, createMenus, createUsers };
 
 

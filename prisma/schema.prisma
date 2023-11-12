@@ -9,18 +9,35 @@ datasource db {
   provider = "mysql"
   url      = env("DATABASE_URL")
 }
+model Users {
+  userId        Int @id @default(autoincrement()) @map("userId")
+  nickname      String @map("nickname")
+  password      String @map("password")
+  usertype      String @default("CUSTOMER") @map("usertype")
+
+  Categories Categories[]
+  Menus Menus[]
+
+  @@map("Users")
+}
+
+
 model Categories {
   categoryId Int @id @default(autoincrement()) @map("categoryId")
+  UserId     Int @map("UserId")
   name       String @map("name")
   order      Int @map("order")
 
-  menus Menus[]
+  Menus Menus[]
+
+  User Users @relation(fields: [UserId], references: [userId], onDelete: Cascade)
 
   @@map("Categories")
 }
 
 model Menus {
   menuId      Int @id @default(autoincrement()) @map("menuId")
+  UserId      Int @map("UserId")
   categoryId  Int @map("categoryId")
   name        String @map("name")
   description String @map("description")
@@ -29,6 +46,7 @@ model Menus {
   order       Int @map("order")
   status      String @default("FOR_SALE") @map("status")
 
-  category Categories @relation(fields: [categoryId], references: [categoryId], onDelete: Cascade)
+  User Users @relation(fields: [UserId], references: [userId], onDelete: Cascade)
+  Category Categories @relation(fields: [categoryId], references: [categoryId], onDelete: Cascade)
   @@map("Menus")
 }

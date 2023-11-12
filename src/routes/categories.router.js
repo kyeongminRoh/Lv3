@@ -1,16 +1,23 @@
 import express from "express";
 import { prisma } from "../utils/prisma/index.js";
 import { createCategory } from "../joi.js";
+import authMiddlewares from '../middlewares/auth.middleware.js'
 
 const router = express.Router();
 // category API
 
-router.post("/categories", async (req, res, next) => {
+router.post("/categories", authMiddlewares, async (req, res, next) => {
   try {
     //        const { categoryId } = req.params;
     const validation = await createCategory.validateAsync(req.body);
     const { name } = validation;
-
+    const { userId } = req.userId
+    const user = await prisma.users.findFirst({
+      where: { userId: user.userId }
+    })
+    if (user.usertype !== "OWNER") {
+      return res.status(400).json({ errorMesaage: "등록할 권한이 존재하지 않습니다." })
+    }
     if (!name) {
       return res
         .status(400)
@@ -47,11 +54,17 @@ router.get("/categories", async (req, res, next) => {
   return res.status(200).json({ data: categories });
 });
 // 카테고리 정보 변경
-router.patch("/categories/:categoryId", async (req, res, next) => {
+router.patch("/categories/:categoryId", authMiddlewares, async (req, res, next) => {
   try {
     const validation = await createCategory.validateAsync(req.body);
     const { name, order } = validation;
     const { categoryId } = req.params;
+    const user = await prisma.users.findFirst({
+      where: { userId: user.userId }
+    })
+    if (user.usertype !== "OWNER") {
+      return res.status(400).json({ errorMesaage: "등록할 권한이 존재하지 않습니다." })
+    }
     const categories = await prisma.categories.findUnique({
       where: {
         categoryId: +categoryId,
@@ -62,6 +75,7 @@ router.patch("/categories/:categoryId", async (req, res, next) => {
         .status(404)
         .json({ errorMessage: "게시글이 존재하지 않습니다." });
     }
+    
     const updateCategory = await prisma.categories.update({
       where: {
         categoryId: +categoryId,
@@ -77,10 +91,16 @@ router.patch("/categories/:categoryId", async (req, res, next) => {
   }
 });
 // delete
-router.delete("/categories/:categoryId", async (req, res, next) => {
+router.delete("/categories/:categoryId", authMiddlewares, async (req, res, next) => {
   try {
     const { categoryId } = req.params;
     //const { name, order } = req.body;
+    const user = await prisma.users.findFirst({
+      where: { userId: user.userId }
+    })
+    if (user.usertype !== "OWNER") {
+      return res.status(400).json({ errorMesaage: "등록할 권한이 존재하지 않습니다." })
+    }
     const categories = await prisma.categories.findFirst({
       where: {
         categoryId: +categoryId,
