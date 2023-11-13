@@ -11,12 +11,10 @@ router.post("/categories", authMiddlewares, async (req, res, next) => {
     //        const { categoryId } = req.params;
     const validation = await createCategory.validateAsync(req.body);
     const { name } = validation;
-    const { userId } = req.userId
-    const user = await prisma.users.findFirst({
-      where: { userId: user.userId }
-    })
-    if (user.usertype !== "OWNER") {
-      return res.status(400).json({ errorMesaage: "등록할 권한이 존재하지 않습니다." })
+    const { userId, usertype } = req.user
+    console.log("1", usertype)
+    if (usertype !== "OWNER") {
+      return res.status(400).json({ errorMessage: "등록할 권한이 존재하지 않습니다." })
     }
     if (!name) {
       return res
@@ -33,7 +31,7 @@ router.post("/categories", authMiddlewares, async (req, res, next) => {
       order = orderCount.order + 1; // 1을 더하고 order 에 할당해 그럼 기존값 보다 1이증가됨
     }
     await prisma.Categories.create({
-      data: { name, order },
+      data: { name, order, UserId : +userId },
     });
     return res.status(201).json({ Message: "카테고리를 등록하였습니다." });
   } catch (error) {
@@ -59,10 +57,9 @@ router.patch("/categories/:categoryId", authMiddlewares, async (req, res, next) 
     const validation = await createCategory.validateAsync(req.body);
     const { name, order } = validation;
     const { categoryId } = req.params;
-    const user = await prisma.users.findFirst({
-      where: { userId: user.userId }
-    })
-    if (user.usertype !== "OWNER") {
+    const { usertype } = req.user
+
+    if (usertype !== "OWNER") {
       return res.status(400).json({ errorMesaage: "등록할 권한이 존재하지 않습니다." })
     }
     const categories = await prisma.categories.findUnique({
@@ -83,6 +80,7 @@ router.patch("/categories/:categoryId", authMiddlewares, async (req, res, next) 
       data: {
         name,
         order,
+        
       },
     });
     return res.status(200).json({ data: updateCategory });
@@ -95,10 +93,8 @@ router.delete("/categories/:categoryId", authMiddlewares, async (req, res, next)
   try {
     const { categoryId } = req.params;
     //const { name, order } = req.body;
-    const user = await prisma.users.findFirst({
-      where: { userId: user.userId }
-    })
-    if (user.usertype !== "OWNER") {
+    const { usertype } = req.user
+    if (usertype !== "OWNER") {
       return res.status(400).json({ errorMesaage: "등록할 권한이 존재하지 않습니다." })
     }
     const categories = await prisma.categories.findFirst({

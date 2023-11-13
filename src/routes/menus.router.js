@@ -12,10 +12,8 @@ router.post("/categories/:categoryId/menus", authMiddlewares, async (req, res, n
     const validation = await createMenus.validateAsync(req.body);
     const { name, description, image, price } = validation;
     const { categoryId } = req.params;
-    const user = await prisma.users.findFirst({
-      where: { userId: user.userId },
-    });
-    if (user.usertype !== "OWNER") {
+    const { userId, usertype } = req.user
+    if (usertype !== "OWNER") {
       return res
         .status(400)
         .json({ errorMesaage: "등록할 권한이 존재하지 않습니다." });
@@ -51,6 +49,7 @@ router.post("/categories/:categoryId/menus", authMiddlewares, async (req, res, n
         image,
         price,
         order,
+        UserId : +userId
       },
     });
     return res.status(201).json({ data: menus });
@@ -127,10 +126,8 @@ router.patch(
       const validation = await createMenus.validateAsync(req.body);
       const { categoryId, menuId } = req.params;
       const { name, description, price, status } = validation;
-      const user = await prisma.users.findFirst({
-        where: { userId: user.userId },
-      });
-      if (user.usertype !== "OWNER") {
+      const { usertype } = req.user
+      if (usertype !== "OWNER") {
         return res
           .status(400)
           .json({ errorMesaage: "수정할 권한이 존재하지 않습니다." });
@@ -171,18 +168,17 @@ router.delete(
   async (req, res, next) => {
     try {
       const { categoryId, menuId } = req.params;
+      const { usertype } = req.user
+
       const menus = await prisma.menus.findFirst({
-        where: { categoryId: +categoryId },
-      });
+        where: { categoryId: +categoryId, menuId: +menuId}
+      })
       if (!menus) {
         return res
           .status(404)
           .json({ errorMessage: "존재하지 않는 메뉴 입니다." });
       }
-      const user = await prisma.users.findFirst({
-        where: { userId: user.userId },
-      });
-      if (user.usertype !== "OWNER") {
+      if (usertype !== "OWNER") {
         return res
           .status(400)
           .json({ errorMesaage: "삭제할 권한이 존재하지 않습니다." });

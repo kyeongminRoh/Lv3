@@ -20,10 +20,11 @@ export default async function (req, res, next) {
     const user = await prisma.users.findFirst({
         where: { userId: +userId }
     })
-    
     if(!user) {
         res.clearCookie('authorization')
         throw new Error ("토큰 사용자가 존재하지 않습니다.") // catch 부분으로 에러를 내림
+    // } else if (user.usertype === 'COUSTOMER') {
+    //     return res.status(400).json({ errorMessage: " 권한이 없다. "})
     }
     //5. `req.user` 에 조회된 사용자 정보를 할당합니다.
     req.user = user
@@ -33,16 +34,9 @@ export default async function (req, res, next) {
 
     }catch (error) {
         res.clearCookie('authorization')// 특정쿠키 삭제 
-        switch (error.name) { // 에러 메세지를 각각구분할수있다.
-        case 'TokenExpiredError': // 토큰이 만료되었을때 발생 하는 에러
-        return res.status(401).json({ message: "토큰이 만료 되었습니다." })
 
-        case 'JsonwebTokenError': // 토큰에 검증이 실패 했을때 발생하는 에러
-        return res.status(401).json({ errorMessage: "토큰 인증에 실패헀습니다." })
-
-        default:
         return res.status(401).json({ errorMessage: error.message ?? '비 정상적인 요청입니다.' }) // 위에 토큰타입이 일치하지 않으면 왼쪽 아니면 오른쪽 출력
     }
     }
 
-}
+

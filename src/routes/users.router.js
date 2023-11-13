@@ -3,7 +3,7 @@ import { prisma } from '../utils/prisma/index.js'
 import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
 import { createUsers } from '../joi.js'
-import authMiddlewares from '../middlewares/auth.middleware.js'
+
 
 
 const router = express.Router()
@@ -11,11 +11,12 @@ const router = express.Router()
 router.post('/sign-up', async (req, res, next) => {
     try {
     const validation = await createUsers.validateAsync(req.body)
-    const { nickname, password, usertype } =  validation
+    const { nickname, password, usertype } = validation
     const user = await prisma.users.findFirst({
         where: { nickname, password, usertype },
-        select: { userId: true }
+        //select: { userId: true }
     })
+    console.log(user)
     if (nickname === password) {
         return res.status(401).json({ errorMessage: "아이디와 비밀번호가 같습니다."})
     }
